@@ -33,7 +33,7 @@ namespace ForumDEG.ViewModels {
         }
 
         private async Task UsersClicked() {
-            await _pageService.PushAsync(new TestViewUsers());
+            await _pageService.PushAsync(new UsersPage());
         }
 
         private async Task FormsClicked() {

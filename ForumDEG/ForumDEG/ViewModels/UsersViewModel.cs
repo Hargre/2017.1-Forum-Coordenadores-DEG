@@ -2,28 +2,25 @@
 using ForumDEG.Models;
 using ForumDEG.Utils;
 using ForumDEG.Views;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
 
 namespace ForumDEG.ViewModels {
-    public class UsersPageViewModel : BaseViewModel {
-        public ObservableCollection<AdministratorDetailPageViewModel> Administrators { get; private set; }
-        public ObservableCollection<CoordinatorDetailPageViewModel> Coordinators { get; private set; }
+    public class UsersViewModel : BaseViewModel {
+        public ObservableCollection<UserDetailViewModel> Administrators { get; private set; }
+        public ObservableCollection<UserDetailViewModel> Coordinators { get; private set; }
 
-        private AdministratorDetailPageViewModel _selectedAdministrator;
-        public AdministratorDetailPageViewModel SelectedAdministrator {
+        private UserDetailViewModel _selectedAdministrator;
+        public UserDetailViewModel SelectedAdministrator {
             get { return _selectedAdministrator; }
             set { SetValue(ref _selectedAdministrator, value); }
         }
 
-        private CoordinatorDetailPageViewModel _selectedCoordinator;
-        public CoordinatorDetailPageViewModel SelectedCoordinator {
+        private UserDetailViewModel _selectedCoordinator;
+        public UserDetailViewModel SelectedCoordinator {
             get { return _selectedCoordinator; }
             set { SetValue(ref _selectedCoordinator, value); }
         }
@@ -33,36 +30,36 @@ namespace ForumDEG.ViewModels {
         public ICommand SelectAdministratorCommand { get; private set; }
         public ICommand SelectCoordinatorCommand { get; private set; }
 
-        private static UsersPageViewModel _instance = null;
+        private static UsersViewModel _instance = null;
 
-        private UsersPageViewModel(IPageService pageService) {
+        private UsersViewModel(IPageService pageService) {
             _pageService = pageService;
-            SelectAdministratorCommand = new Command<AdministratorDetailPageViewModel>(async vm => await SelectAdministrator(vm));
-            SelectCoordinatorCommand = new Command<CoordinatorDetailPageViewModel>(async vm => await SelectCoordinator(vm));
+            SelectAdministratorCommand = new Command<UserDetailViewModel>(async vm => await SelectAdministrator(vm));
+            SelectCoordinatorCommand = new Command<UserDetailViewModel>(async vm => await SelectCoordinator(vm));
         }
 
-        public static UsersPageViewModel GetInstance() {
-            if (_instance == null) _instance = new UsersPageViewModel(new PageService());
+        public static UsersViewModel GetInstance() {
+            if (_instance == null) _instance = new UsersViewModel(new PageService());
             return _instance;
         }
 
-        private async Task SelectAdministrator(AdministratorDetailPageViewModel administrator) {
+        private async Task SelectAdministrator(UserDetailViewModel administrator) {
             if (administrator == null)
                 return;
             SelectedAdministrator = administrator;
-            await _pageService.PushAsync(new ForumDetailPage());
+            await _pageService.PushAsync(new UserDetailPage(administrator));
         }
 
-        private async Task SelectCoordinator(CoordinatorDetailPageViewModel coordinator) {
+        private async Task SelectCoordinator(UserDetailViewModel coordinator) {
             if (coordinator == null)
                 return;
             SelectedCoordinator = coordinator;
-            await _pageService.PushAsync(new ForumDetailPage());
+            await _pageService.PushAsync(new UserDetailPage(coordinator));
         }
 
-        public void UpdateUsersLists() {
-            Administrators = new ObservableCollection<AdministratorDetailPageViewModel>();
-            Coordinators = new ObservableCollection<CoordinatorDetailPageViewModel>();
+        public void UpdateUsersList() {
+            Administrators = new ObservableCollection<UserDetailViewModel>();
+            Coordinators = new ObservableCollection<UserDetailViewModel>();
 
             Task<List<Administrator>> administratorslisttask = AdministratorDatabase.getAdmDB.GetAll();
             administratorslisttask.Wait();
@@ -75,23 +72,25 @@ namespace ForumDEG.ViewModels {
             List<Coordinator> coordinatorslist = coordinatorslisttask.Result;
 
             foreach (Coordinator coordinator in coordinatorslist) {
-                Coordinators.Add(new CoordinatorDetailPageViewModel {
+                Coordinators.Add(new UserDetailViewModel {
                     Name = coordinator.Name,
                     Id = coordinator.Id,
-                    Password = coordinator.Password,
                     Email = coordinator.Email,
                     Registration = coordinator.Registration,
-                    Course = coordinator.Course
+                    Course = coordinator.Course,
+                    IsAdministrator = false,
+                    IsCoordinator = true
                 });
             }
 
             foreach (Administrator administrator in administratorslist) {
-                Administrators.Add(new AdministratorDetailPageViewModel {
+                Administrators.Add(new UserDetailViewModel {
                     Name = administrator.Name,
                     Id = administrator.Id,
-                    Password = administrator.Password,
                     Email = administrator.Email,
-                    Registration = administrator.Registration
+                    Registration = administrator.Registration,
+                    IsAdministrator = true,
+                    IsCoordinator = false
                 });
             }
         }
